@@ -15,19 +15,19 @@
 
 #include "SparkFunCCS811.h" //Make sure you install this library it will not work without it
 
-#define CCS811_ADDR 0x5B //Default I2C Address
-//#define CCS811_ADDR 0x5A //Alternate I2C Address
+//define CCS811_ADDR 0x5B //Default I2C Address
+#define CCS811_ADDR 0x5A //Alternate I2C Address
 
 CCS811 mySensor(CCS811_ADDR);
 
 // you should get Auth Token in the Blynk App.
 // go to the Project Settings (nut icon).
-char auth[] = "KhlWjGuWfQCcTJ5l4wUboEf_zT7gCmjX";
+char auth[] = "qoMQKz1WeZXd0LzxQsM54Xgv1UkAmq87";
 
 // your WiFi credentials.
 // set password to "" for open networks.
-char ssid[] = "Rohan's 11 Pro";
-char pass[] = "hello123";
+char ssid[] = "ORBI19";
+char pass[] = "MAji0220";
 
 // create variable of type BlynkTimer, see more details below
 BlynkTimer timer;
