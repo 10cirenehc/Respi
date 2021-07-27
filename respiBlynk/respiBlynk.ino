@@ -12,7 +12,7 @@
 
 // include libraries required for Blynk and NodeMCU communication
 #include <ESP8266WiFi.h>
-#include <BlynkSimpleEsp8266.h>
+#include <BlynkSimpleStream.h>
 
 
 #define BLYNK_TEMPLATE_ID "TMPLC03EIzmT"
@@ -26,6 +26,7 @@ char pass[] = "hello123";
 
 // "Pliploo"
 // "12345678"
+WiFiClient wifiClient;
 
 //#define BLYNK_DEBUG
 
@@ -124,8 +125,10 @@ void setup() {
   }
 
     // starts the connection with Blynk using the data provided at the top (Wi-Fi connection name, password, and auth token
-  Blynk.begin(auth, ssid, pass);
-
+  connectWiFi();
+  connectBlynk();
+  Blynk.begin(wifiClient, auth);
+  
   // a timer function which is called every 1000 millisecond. Note that it calls the function myTimerEvent, which in turn send the currentDistance to the Blynk server
   timer.setInterval(30000L, myTimerEvent); // setup a function to be called every 30 seconds
 
@@ -172,6 +175,16 @@ void loop() {
       Serial.println("  ug/m3");   
       Serial.println();
     }
+  if (WiFi.status() != WL_CONNECTED) {
+    connectWiFi();
+    return;
+  }
+
+  // Reconnect to Blynk Cloud
+  if (!wifiClient.connected()) {
+    connectBlynk();
+    return;
+  }
 
   Blynk.run();
   timer.run();
@@ -306,4 +319,28 @@ int transmitPM10(unsigned char *thebuf)
 float average(float a[3]){
   float sum = a[0] + a[1] + a[2];
   return sum/3;
+}
+
+bool connectBlynk()
+{
+  wifiClient.stop();
+  return wifiClient.connect(BLYNK_DEFAULT_DOMAIN, BLYNK_DEFAULT_PORT);
+}
+
+// This function tries to connect to your WiFi network
+void connectWiFi()
+{
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  if (pass && strlen(pass)) {
+    WiFi.begin((char*)ssid, (char*)pass);
+  } else {
+    WiFi.begin((char*)ssid);
+  }
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
 }
