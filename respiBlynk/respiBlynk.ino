@@ -1,9 +1,35 @@
 
+//BLYNK CONFIGURATION
+
+#define APP_DEBUG
+// Uncomment your board, or configure a custom board in Settings.h
+//#define USE_SPARKFUN_BLYNK_BOARD
+#define USE_NODE_MCU_BOARD
+//#define USE_WITTY_CLOUD_BOARD
+//#define USE_WEMOS_D1_MINI
+
 #define BLYNK_PRINT Serial
 
 // include libraries required for Blynk and NodeMCU communication
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
+
+
+#define BLYNK_TEMPLATE_ID "TMPLC03EIzmT"
+#define BLYNK_DEVICE_NAME "RohanRespi"
+char auth[] = "WAivy6qAUKwk7n5UY1s8E0zJO7OvWR5a";
+
+// your WiFi credentials.
+// set password to "" for open networks.
+char ssid[] = "Rohan's 11 Pro";
+char pass[] = "hello123";
+
+// "Pliploo"
+// "12345678"
+
+//#define BLYNK_DEBUG
+
+
 
 #include <dht_nonblocking.h> //this library was written for the sensor
 //you must upload the library zip file included in the Lab 2 folder
@@ -20,14 +46,7 @@
 
 CCS811 mySensor(CCS811_ADDR);
 
-// you should get Auth Token in the Blynk App.
-// go to the Project Settings (nut icon).
-char auth[] = "KhlWjGuWfQCcTJ5l4wUboEf_zT7gCmjX";
 
-// your WiFi credentials.
-// set password to "" for open networks.
-char ssid[] = "Rohan's 11 Pro";
-char pass[] = "hello123";
 
 // create variable of type BlynkTimer, see more details below
 BlynkTimer timer;
@@ -104,7 +123,7 @@ void setup() {
       ;
   }
 
-    // starts the connection with Blynk using the data provided at the top (Wi-Fi connection name, password, and auth token)
+    // starts the connection with Blynk using the data provided at the top (Wi-Fi connection name, password, and auth token
   Blynk.begin(auth, ssid, pass);
 
   // a timer function which is called every 1000 millisecond. Note that it calls the function myTimerEvent, which in turn send the currentDistance to the Blynk server
@@ -156,6 +175,7 @@ void loop() {
 
   Blynk.run();
   timer.run();
+
   
   //Check to see if data is ready with .dataAvailable()
   if (mySensor.dataAvailable())
@@ -173,6 +193,7 @@ void loop() {
     Serial.println(tempVOC);
     
   }
+  
   
   //Measure temperature and humidity.  If the functions returns
   //true, then a measurement is available. 
