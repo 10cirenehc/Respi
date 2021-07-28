@@ -1,36 +1,9 @@
 
-//BLYNK CONFIGURATION
-
-#define APP_DEBUG
-// Uncomment your board, or configure a custom board in Settings.h
-//#define USE_SPARKFUN_BLYNK_BOARD
-#define USE_NODE_MCU_BOARD
-//#define USE_WITTY_CLOUD_BOARD
-//#define USE_WEMOS_D1_MINI
-
 #define BLYNK_PRINT Serial
 
 // include libraries required for Blynk and NodeMCU communication
 #include <ESP8266WiFi.h>
-#include <BlynkSimpleStream.h>
-
-
-#define BLYNK_TEMPLATE_ID "TMPLC03EIzmT"
-#define BLYNK_DEVICE_NAME "RohanRespi"
-char auth[] = "WAivy6qAUKwk7n5UY1s8E0zJO7OvWR5a";
-
-// your WiFi credentials.
-// set password to "" for open networks.
-char ssid[] = "Rohan's 11 Pro";
-char pass[] = "hello123";
-
-// "Pliploo"
-// "12345678"
-WiFiClient wifiClient;
-
-//#define BLYNK_DEBUG
-
-
+#include <BlynkSimpleEsp8266.h>
 
 #include <dht_nonblocking.h> //this library was written for the sensor
 //you must upload the library zip file included in the Lab 2 folder
@@ -47,7 +20,14 @@ WiFiClient wifiClient;
 
 CCS811 mySensor(CCS811_ADDR);
 
+// you should get Auth Token in the Blynk App.
+// go to the Project Settings (nut icon).
+char auth[] = "KhlWjGuWfQCcTJ5l4wUboEf_zT7gCmjX";
 
+// your WiFi credentials.
+// set password to "" for open networks.
+char ssid[] = "Rohan's 11 Pro";
+char pass[] = "hello123";
 
 // create variable of type BlynkTimer, see more details below
 BlynkTimer timer;
@@ -64,16 +44,19 @@ const int dFour = 2; //D4
 const int dFive = 14;    //D5
 const int dSix = 12;    //D6
 const int dSeven = 13;    //D7
+const int dEight = 15;
 
 
 DHT dht(dFour, DHTTYPE);
 
+//#include <Wire.h>
+//#include <ESP8266WiFi.h>
 #define LENG 31   //0x42 + 31 bytes equal to 32 bytes
 unsigned char buf[LENG];
  
-int PM01Value=0;          //define PM1.0 value of the air detector module
-int PM2_5Value=0;         //define PM2.5 value of the air detector module
-int PM10Value=0;         //define PM10 value of the air detector module
+int PM01Value;          //define PM1.0 value of the air detector module
+int PM2_5Value;         //define PM2.5 value of the air detector module
+int PM10Value;         //define PM10 value of the air detector module
 char temperatureFString[6];
 char dpString[6];
 char humidityString[6];
@@ -101,19 +84,36 @@ float PM10List[3];
 
 int counter = 0;
 
+float lat;
+float lon;
+int index;
+
+WidgetMap myMap(V15);
+
+BLYNK_WRITE(10){
+    lat = param[0].asInt()
+    lon = param[1].asInt()
+}
+
 void setup() {
   // declare pins as inputs and outputs
+  Serial.begin(9600);
+  
   pinMode(dZero, INPUT);
   pinMode(dOne, INPUT);
   pinMode(dTwo, INPUT);
   pinMode(dFour, INPUT);
-  pinMode(dFive, INPUT);
-  pinMode(dSix, INPUT);
+  pinMode(dFive, OUTPUT);
+  pinMode(dSix, OUTPUT);
   pinMode(dSeven, OUTPUT);
-  
+  pinMode(dEight, OUTPUT);
   // start the serial connection
-  Serial.begin(9600);
-  delay(10);
+  
+
+  Blynk.begin(auth, ssid, pass);
+//a timer function which is called every 1000 millisecond. Note that it calls the function myTimerEvent, which in turn send the currentDistance to the Blynk server
+  timer.setInterval(5000L, myTimerEvent);// setup a function to be called every 10 seconds
+  
   mySensor.begin();
   Wire.begin(); //Inialize I2C Hardware
 
@@ -124,71 +124,104 @@ void setup() {
       ;
   }
 
-    // starts the connection with Blynk using the data provided at the top (Wi-Fi connection name, password, and auth token
-  connectWiFi();
-  connectBlynk();
-  Blynk.begin(wifiClient, auth);
+    // starts the connection with Blynk using the data provided at the top (Wi-Fi connection name, password, and auth token)
   
-  // a timer function which is called every 1000 millisecond. Note that it calls the function myTimerEvent, which in turn send the currentDistance to the Blynk server
-  timer.setInterval(30000L, myTimerEvent); // setup a function to be called every 30 seconds
+  delay(10);
 
+  //Plot a bunch of points on the map
+  int index = 0;
+  float lat = 1.3521;
+  float lon = 103.8198;
+  String value = "PM1.0:" +String(10.0) + " PM2.5:" + String(25.0) + " PM10:" + String(30.2);
+  myMap.location(index, lat, lon, value);
+
+  index = 1
+  float lat = 1.3451;
+  float lon = 103.8913;
+  String value = "PM1.0:" +String(43.2) + " PM2.5:" + String(12.2) + " PM10:" + String(35.2);
+  myMap.location(index, lat, lon, value);
+
+  index = 2
+  float lat = 1.3110;
+  float lon = 103.9434;
+  String value = "PM1.0:" +String(4.2) + " PM2.5:" + String(5.3) + " PM10:" + String(5.7);
+  myMap.location(index, lat, lon, value);
+
+  index = 3
+  float lat = 1.3050;
+  float lon = 103.8330;
+  String value = "PM1.0:" +String(2.3) + " PM2.5:" + String(10.2) + " PM10:" + String(5.4);
+  myMap.location(index, lat, lon, value);
+
+  index = 4
+  float lat = 1.3814;
+  float lon = 103.8019;
+  String value = "PM1.0:" +String(1.2) + " PM2.5:" + String(3.0) + " PM10:" + String(1.3);
+  myMap.location(index, lat, lon, value);
+
+  index = 5
+  float lat = 1.3549;
+  float lon = 103.6977;
+  String value = "PM1.0:" +String(40.2) + " PM2.5:" + String(20.3) + " PM10:" + String(14.5);
+  myMap.location(index, lat, lon, value);
+
+  index = 6
+  float lat = 1.3890;
+  float lon = 103.7550;
+  String value = "PM1.0:" +String(30.2) + " PM2.5:" + String(22.3) + " PM10:" + String(15.6);
+  myMap.location(index, lat, lon, value);
 }
 
 int button;
-//float sdsLow, sdsHigh;
+//int buttonLight;
+//int buttonFlag;
 
-float t; //float variables allow for decimals
+float t;
 float h;
 
 float tempCO2;
 float tempVOC;
 
 void loop() {
+  button = 0;
 
-  if(Serial.find(0x42)){    //start to read when detect 0x42
+  Serial.println("");
+
+  Blynk.run();
+  timer.run();
+  
+if(Serial.find(0x42)){    //start to read when detect 0x42 //THIS IS THE IF STATEMENT THAT RUNS 1 TIME
+    //Serial.println("Step 1");
     Serial.readBytes(buf,LENG);
- 
     if(buf[0] == 0x4d){
+      //Serial.println("Step 2");
       if(checkValue(buf,LENG)){
         PM01Value=transmitPM01(buf); //count PM1.0 value of the air detector module
+        //Serial.println(PM01Value);
         PM2_5Value=transmitPM2_5(buf);//count PM2.5 value of the air detector module
+        //Serial.println(PM2_5Value);
         PM10Value=transmitPM10(buf); //count PM10 value of the air detector module 
+        //Serial.println(PM10Value);
       }           
     } 
   }
  
   static unsigned long OledTimer=millis();  
-    if (millis() - OledTimer >=1000) 
-    {
-      OledTimer=millis(); 
+  if (millis() - OledTimer >=1000){
+     OledTimer=millis(); 
       
-      Serial.print("PM1.0: ");  
-      Serial.print(PM01Value);
-      Serial.println("  ug/m3");            
+     Serial.print("PM1.0: ");  
+     Serial.print(PM01Value);
+     Serial.println("  ug/m3");            
     
-      Serial.print("PM2.5: ");  
-      Serial.print(PM2_5Value);
-      Serial.println("  ug/m3");     
+     Serial.print("PM2.5: ");  
+     Serial.print(PM2_5Value);
+     Serial.println("  ug/m3");     
       
-      Serial.print("PM10 : ");  
-      Serial.print(PM10Value);
-      Serial.println("  ug/m3");   
-      Serial.println();
-    }
-  if (WiFi.status() != WL_CONNECTED) {
-    connectWiFi();
-    return;
-  }
-
-  // Reconnect to Blynk Cloud
-  if (!wifiClient.connected()) {
-    connectBlynk();
-    return;
-  }
-
-  Blynk.run();
-  timer.run();
-
+     Serial.print("PM10 : ");  
+     Serial.print(PM10Value);
+     Serial.println("  ug/m3");   
+   }
   
   //Check to see if data is ready with .dataAvailable()
   if (mySensor.dataAvailable())
@@ -205,16 +238,18 @@ void loop() {
     Serial.print("TVOC: ");
     Serial.println(tempVOC);
     
+  } else {
+    Serial.println("No data");
   }
   
-  
-  //Measure temperature and humidity.  If the functions returns
-  //true, then a measurement is available. 
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
+//  //Measure temperature and humidity.  If the functions returns
+//  //true, then a measurement is available. 
+unsigned long currentMillis = millis();
+  //if (currentMillis - previousMillis >= interval) {
     // save the last time you updated the DHT values
-    previousMillis = currentMillis;
+    //previousMillis = currentMillis;
     // Read temperature as Celsius (the default)
+    
     float newT = dht.readTemperature();
     // Read temperature as Fahrenheit (isFahrenheit = true)
     //float newT = dht.readTemperature(true);
@@ -238,20 +273,33 @@ void loop() {
       Serial.print("Humidity: ");
       Serial.println(h);
     }
-  }
+  //}
   
-  //digitalWrite(dFour, LOW);
-  if(digitalRead(button)==HIGH){
+  if(digitalRead(dZero)==HIGH){
     button=1;
+    Serial.println("Button Pressed");
+    index+=1;
+    String value = "VOC:" + String(tempVOC)+" PM2.5:" + String(PM2_5Value) + " PM10:" + String(PM10Value);
+    myMap.location(index, lat, lon, value);
+  }
+    //digitalWrite(dEight, HIGH);
   }
 
-  if(t<minTemp || t>maxTemp || h<minHum || h>maxHum || tempVOC>minTVOC || PM01Value>minPM1 || PM2_5Value>minPM2_5 || PM10Value>minPM10){
+  if(PM01Value>minPM1 || PM2_5Value>minPM2_5 || PM10Value>minPM10){ //t<minTemp || t>maxTemp || h<minHum || h>maxHum || tempVOC>minTVOC || 
 
-    for(int i = 0; i<5; i++){
-      tone(dSeven, 1000, 150);
-      delay(3000);
-    }
+//    for(int i = 0; i<5; i++){
+//      tone(dSeven, 1000, 150);
+//      delay(3000);
+//    }
+
+    analogWrite(dSix, 255);
+    analogWrite(dFive, 0);
     
+  } else {
+
+  analogWrite(dFive, 255);
+  analogWrite(dSix, 0);
+      
   }
 
    tList[counter%3] = t;
@@ -264,9 +312,54 @@ void loop() {
    PM2_5List[counter%3] = PM2_5Value;
    PM10List[counter%3] = PM10Value;
 
-  delay(30000);
+  counter++;
+
+  //delay(5000);
 
 }
+
+BLYNK_WRITE(20){
+  minTemp = map(param.asInt(), 0, 1023, -30, 70);
+  Serial.print("Minimum temperature threshold changed to ");
+  Serial.print(minTemp);
+  Serial.println("");
+}
+BLYNK_WRITE(21){
+  minHum = map(param.asInt(), 0, 1023, 0, 100);
+  Serial.print("Minimum humidity threshold changed to ");
+  Serial.print(minHum);
+  Serial.println("");
+}
+BLYNK_WRITE(22){
+  minTVOC = map(param.asInt(), 0, 1023, 0, 500);
+  Serial.print("Minimum VOC threshold changed to ");
+  Serial.print(minTVOC);
+  Serial.println("");
+}
+BLYNK_WRITE(23){
+  minPM1 = map(param.asInt(), 0, 1023, 0, 100);
+  Serial.print("Minimum PM 1 threshold changed to ");
+  Serial.print(minPM1);
+  Serial.println("");
+}
+BLYNK_WRITE(24){
+  minPM2_5 = map(param.asInt(), 0, 1023, 0, 100);
+  Serial.print("Minimum PM 2.5 threshold changed to ");
+  Serial.print(minPM2_5);
+  Serial.println("");
+}
+BLYNK_WRITE(25){
+  minPM10 = map(param.asInt(), 0, 1023, 0, 100);
+  Serial.print("Minimum PM 10 threshold changed to ");
+  Serial.print(minPM10);
+  Serial.println("");
+}
+//BLYNK_WRITE(26){
+//  minPM10 = map(param.asInt(), 0, 1023, 0, 100);
+//  Serial.print("Minimum PM 10 threshold changed to ");
+//  Serial.print(minPM10);
+//  Serial.println("");
+//}
 
 void myTimerEvent(){
   Blynk.virtualWrite(V0, average(tList)); // send data to app
@@ -316,31 +409,7 @@ int transmitPM10(unsigned char *thebuf)
   PM10Val=((thebuf[7]<<8) + thebuf[8]); //count PM10 value of the air detector module  
   return PM10Val;
 }
-float average(float a[3]){
+float average(float a[]){
   float sum = a[0] + a[1] + a[2];
   return sum/3;
-}
-
-bool connectBlynk()
-{
-  wifiClient.stop();
-  return wifiClient.connect(BLYNK_DEFAULT_DOMAIN, BLYNK_DEFAULT_PORT);
-}
-
-// This function tries to connect to your WiFi network
-void connectWiFi()
-{
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-
-  if (pass && strlen(pass)) {
-    WiFi.begin((char*)ssid, (char*)pass);
-  } else {
-    WiFi.begin((char*)ssid);
-  }
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
 }
