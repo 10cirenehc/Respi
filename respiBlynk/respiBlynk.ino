@@ -86,13 +86,76 @@ int counter = 0;
 
 float lat;
 float lon;
-int index;
 
 WidgetMap myMap(V15);
 
 BLYNK_WRITE(10){
-    lat = param[0].asInt()
-    lon = param[1].asInt()
+    lat = param[0].asInt();
+    lon = param[1].asInt();
+}
+
+float average(float a[]){
+  float sum = a[0] + a[1] + a[2];
+  return sum/3;
+}
+
+char checkValue(unsigned char *thebuf, char leng)
+{  
+  char receiveflag=0;
+  int receiveSum=0;
+ 
+  for(int i=0; i<(leng-2); i++){
+  receiveSum=receiveSum+thebuf[i];
+  }
+  receiveSum=receiveSum + 0x42;
+ 
+  if(receiveSum == ((thebuf[leng-2]<<8)+thebuf[leng-1]))  //check the serial data 
+  {
+    receiveSum = 0;
+    receiveflag = 1;
+  }
+  return receiveflag;
+}
+int transmitPM01(unsigned char *thebuf)
+{
+  int PM01Val;
+  PM01Val=((thebuf[3]<<8) + thebuf[4]); //count PM1.0 value of the air detector module
+  return PM01Val;
+}
+//transmit PM Value to PC
+int transmitPM2_5(unsigned char *thebuf)
+{
+  int PM2_5Val;
+  PM2_5Val=((thebuf[5]<<8) + thebuf[6]);//count PM2.5 value of the air detector module
+  return PM2_5Val;
+  }
+//transmit PM Value to PC
+int transmitPM10(unsigned char *thebuf)
+{
+  int PM10Val;
+  PM10Val=((thebuf[7]<<8) + thebuf[8]); //count PM10 value of the air detector module  
+  return PM10Val;
+}
+
+int button;
+//int buttonLight;
+//int buttonFlag;
+
+float t;
+float h;
+
+float tempCO2;
+float tempVOC;
+
+void myTimerEvent(){
+  Blynk.virtualWrite(V0, average(tList)); // send data to app
+  Blynk.virtualWrite(V1, average(hList)); // send data to app
+  Blynk.virtualWrite(V2, average(tempVOCList)); // send data to app
+  Blynk.virtualWrite(V3, average(tempCO2List)); // send data to app
+  Blynk.virtualWrite(V4, button); // send data to app
+  Blynk.virtualWrite(V5, average(PM01List)); // send data to app
+  Blynk.virtualWrite(V6, average(PM2_5List)); // send data to app
+  Blynk.virtualWrite(V7, average(PM10List)); // send data to app
 }
 
 void setup() {
@@ -130,60 +193,52 @@ void setup() {
 
   //Plot a bunch of points on the map
   int index = 0;
-  float lat = 1.3521;
-  float lon = 103.8198;
+  lat = 1.3521;
+  lon = 103.8198;
   String value = "PM1.0:" +String(10.0) + " PM2.5:" + String(25.0) + " PM10:" + String(30.2);
   myMap.location(index, lat, lon, value);
 
-  index = 1
-  float lat = 1.3451;
-  float lon = 103.8913;
-  String value = "PM1.0:" +String(43.2) + " PM2.5:" + String(12.2) + " PM10:" + String(35.2);
+  index = 1;
+  lat = 1.3451;
+  lon = 103.8913;
+  value = "PM1.0:" +String(43.2) + " PM2.5:" + String(12.2) + " PM10:" + String(35.2);
   myMap.location(index, lat, lon, value);
 
-  index = 2
-  float lat = 1.3110;
-  float lon = 103.9434;
-  String value = "PM1.0:" +String(4.2) + " PM2.5:" + String(5.3) + " PM10:" + String(5.7);
+  index = 2;
+  lat = 1.3110;
+  lon = 103.9434;
+  value = "PM1.0:" +String(4.2) + " PM2.5:" + String(5.3) + " PM10:" + String(5.7);
   myMap.location(index, lat, lon, value);
 
-  index = 3
-  float lat = 1.3050;
-  float lon = 103.8330;
-  String value = "PM1.0:" +String(2.3) + " PM2.5:" + String(10.2) + " PM10:" + String(5.4);
+  index = 3;
+  lat = 1.3050;
+  lon = 103.8330;
+  value = "PM1.0:" +String(2.3) + " PM2.5:" + String(10.2) + " PM10:" + String(5.4);
   myMap.location(index, lat, lon, value);
 
-  index = 4
-  float lat = 1.3814;
-  float lon = 103.8019;
-  String value = "PM1.0:" +String(1.2) + " PM2.5:" + String(3.0) + " PM10:" + String(1.3);
+  index = 4;
+  lat = 1.3814;
+  lon = 103.8019;
+  value = "PM1.0:" +String(1.2) + " PM2.5:" + String(3.0) + " PM10:" + String(1.3);
   myMap.location(index, lat, lon, value);
 
-  index = 5
-  float lat = 1.3549;
-  float lon = 103.6977;
-  String value = "PM1.0:" +String(40.2) + " PM2.5:" + String(20.3) + " PM10:" + String(14.5);
+  index = 5;
+  lat = 1.3549;
+  lon = 103.6977;
+  value = "PM1.0:" +String(40.2) + " PM2.5:" + String(20.3) + " PM10:" + String(14.5);
   myMap.location(index, lat, lon, value);
 
-  index = 6
-  float lat = 1.3890;
-  float lon = 103.7550;
-  String value = "PM1.0:" +String(30.2) + " PM2.5:" + String(22.3) + " PM10:" + String(15.6);
+  index = 6;
+  lat = 1.3890;
+  lon = 103.7550;
+  value = "PM1.0:" +String(30.2) + " PM2.5:" + String(22.3) + " PM10:" + String(15.6);
   myMap.location(index, lat, lon, value);
 }
 
-int button;
-//int buttonLight;
-//int buttonFlag;
-
-float t;
-float h;
-
-float tempCO2;
-float tempVOC;
-
 void loop() {
   button = 0;
+  String value;
+  int index = 7;
 
   Serial.println("");
 
@@ -279,11 +334,10 @@ unsigned long currentMillis = millis();
     button=1;
     Serial.println("Button Pressed");
     index+=1;
-    String value = "VOC:" + String(tempVOC)+" PM2.5:" + String(PM2_5Value) + " PM10:" + String(PM10Value);
+    value = "VOC:" + String(tempVOC)+" PM2.5:" + String(PM2_5Value) + " PM10:" + String(PM10Value);
     myMap.location(index, lat, lon, value);
   }
     //digitalWrite(dEight, HIGH);
-  }
 
   if(PM01Value>minPM1 || PM2_5Value>minPM2_5 || PM10Value>minPM10){ //t<minTemp || t>maxTemp || h<minHum || h>maxHum || tempVOC>minTVOC || 
 
@@ -360,56 +414,3 @@ BLYNK_WRITE(25){
 //  Serial.print(minPM10);
 //  Serial.println("");
 //}
-
-void myTimerEvent(){
-  Blynk.virtualWrite(V0, average(tList)); // send data to app
-  Blynk.virtualWrite(V1, average(hList)); // send data to app
-  Blynk.virtualWrite(V2, average(tempVOCList)); // send data to app
-  Blynk.virtualWrite(V3, average(tempCO2List)); // send data to app
-  Blynk.virtualWrite(V4, button); // send data to app
-  Blynk.virtualWrite(V5, average(PM01List)); // send data to app
-  Blynk.virtualWrite(V6, average(PM2_5List)); // send data to app
-  Blynk.virtualWrite(V7, average(PM10List)); // send data to app
-}
-
-char checkValue(unsigned char *thebuf, char leng)
-{  
-  char receiveflag=0;
-  int receiveSum=0;
- 
-  for(int i=0; i<(leng-2); i++){
-  receiveSum=receiveSum+thebuf[i];
-  }
-  receiveSum=receiveSum + 0x42;
- 
-  if(receiveSum == ((thebuf[leng-2]<<8)+thebuf[leng-1]))  //check the serial data 
-  {
-    receiveSum = 0;
-    receiveflag = 1;
-  }
-  return receiveflag;
-}
-int transmitPM01(unsigned char *thebuf)
-{
-  int PM01Val;
-  PM01Val=((thebuf[3]<<8) + thebuf[4]); //count PM1.0 value of the air detector module
-  return PM01Val;
-}
-//transmit PM Value to PC
-int transmitPM2_5(unsigned char *thebuf)
-{
-  int PM2_5Val;
-  PM2_5Val=((thebuf[5]<<8) + thebuf[6]);//count PM2.5 value of the air detector module
-  return PM2_5Val;
-  }
-//transmit PM Value to PC
-int transmitPM10(unsigned char *thebuf)
-{
-  int PM10Val;
-  PM10Val=((thebuf[7]<<8) + thebuf[8]); //count PM10 value of the air detector module  
-  return PM10Val;
-}
-float average(float a[]){
-  float sum = a[0] + a[1] + a[2];
-  return sum/3;
-}
